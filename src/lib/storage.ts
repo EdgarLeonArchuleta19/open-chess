@@ -1,22 +1,21 @@
-import type { LocalPreferences } from '../features/chess/types/chess.types';
+import type { AppPreferences } from '../features/chess/types/chess.types';
 
-const PREFERENCES_STORAGE_KEY = 'what-the-chess:preferences:v1';
-const EASTER_EGG_UNLOCKED_KEY = 'what-the-chess:rochin-unlocked:v1';
+const PREFERENCES_STORAGE_KEY = 'openchess:preferences:v1';
+const EASTER_EGG_UNLOCKED_KEY = 'openchess:rochin-unlocked:v1';
 
-export const DEFAULT_PREFERENCES: LocalPreferences = {
-  autoRotateBoard: false,
-  boardOrientation: 'w',
-  showSwapPreview: true,
+export const DEFAULT_PREFERENCES: AppPreferences = {
+  theme: 'dark',
+  boardPalette: 'minimal',
+  soundEnabled: true,
   showCoordinates: true,
-  whitePlayerName: 'Jugador 1 (Blancas)',
-  blackPlayerName: 'Jugador 2 (Negras)',
+  autoFlipLocal: false,
 };
 
-export function loadPreferences(): LocalPreferences {
+export function loadPreferences(): AppPreferences {
   try {
     const raw = window.localStorage.getItem(PREFERENCES_STORAGE_KEY);
     if (!raw) return DEFAULT_PREFERENCES;
-    const parsed = JSON.parse(raw) as Partial<LocalPreferences>;
+    const parsed = JSON.parse(raw) as Partial<AppPreferences>;
     return {
       ...DEFAULT_PREFERENCES,
       ...parsed,
@@ -26,11 +25,11 @@ export function loadPreferences(): LocalPreferences {
   }
 }
 
-export function savePreferences(prefs: LocalPreferences): void {
+export function savePreferences(prefs: AppPreferences): void {
   try {
     window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(prefs));
   } catch {
-    // Ignore storage quota or private mode errors — localStorage is strictly optional
+    // Ignore storage quota or private mode errors
   }
 }
 

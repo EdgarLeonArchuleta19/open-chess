@@ -1,32 +1,21 @@
 import React from 'react';
 
 interface WordmarkProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'lg';
 }
 
-export const Wordmark: React.FC<WordmarkProps> = ({ size = 'lg' }) => {
-  if (size === 'sm') {
+export const Wordmark: React.FC<WordmarkProps> = ({ size = 'sm' }) => {
+  if (size === 'lg') {
     return (
-      <div className="inline-flex items-center gap-2 select-none">
-        <span className="font-display font-black tracking-tight text-lg sm:text-xl text-[#F8FAFC]">
-          WHAT THE{' '}
-          <span className="text-[#B8FF3B] underline decoration-[#B8FF3B]/50 decoration-wavy underline-offset-4">
-            CHESS?!
-          </span>
-        </span>
-      </div>
-    );
-  }
-
-  if (size === 'md') {
-    return (
-      <div className="inline-flex flex-col items-start select-none">
-        <div className="flex items-center gap-2">
-          <span className="font-display font-black tracking-tight text-2xl sm:text-3xl text-[#F8FAFC]">
-            WHAT THE
-          </span>
-          <span className="px-2.5 py-0.5 rounded-lg bg-[#B8FF3B] text-[#080B11] font-display font-black text-2xl sm:text-3xl -rotate-2 shadow-sm">
-            CHESS?!
+      <div className="inline-flex flex-col items-center select-none">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-950 flex items-center justify-center shadow-sm">
+            <svg viewBox="0 0 32 32" className="w-6 h-6" fill="currentColor" aria-hidden="true">
+              <path d="M9 24.5h14v2H9v-2zm1.5-2L11.8 16l-3-1.4-.6-3.2 4-4.6 2.5.4 1.8-2.2 1.8 3c2.8 1.5 3.9 5.5 3 10.2l-.7 4.3h-10.1z" />
+            </svg>
+          </div>
+          <span className="font-serif text-4xl sm:text-5xl tracking-tight text-zinc-950 dark:text-zinc-50">
+            Open<span className="italic opacity-75">Chess</span>
           </span>
         </div>
       </div>
@@ -34,17 +23,15 @@ export const Wordmark: React.FC<WordmarkProps> = ({ size = 'lg' }) => {
   }
 
   return (
-    <div className="inline-flex flex-col items-center select-none">
-      <div className="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-[#222A36] border border-[#B8FF3B]/30 text-[#B8FF3B] text-xs font-mono uppercase tracking-widest">
-        <span className="w-2 h-2 rounded-full bg-[#B8FF3B] animate-pulse" />
-        Variante de Ajedrez Caótico Determinista
+    <div className="inline-flex items-center gap-2.5 select-none">
+      <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-950 flex items-center justify-center transition-transform group-hover:scale-105">
+        <svg viewBox="0 0 32 32" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+          <path d="M9 24.5h14v2H9v-2zm1.5-2L11.8 16l-3-1.4-.6-3.2 4-4.6 2.5.4 1.8-2.2 1.8 3c2.8 1.5 3.9 5.5 3 10.2l-.7 4.3h-10.1z" />
+        </svg>
       </div>
-      <h1 className="font-display font-black tracking-tight text-4xl sm:text-6xl md:text-7xl text-center leading-none">
-        <span className="text-[#F8FAFC]">WHAT THE </span>
-        <span className="inline-block px-3 py-1 mt-1 sm:mt-0 rounded-2xl bg-[#B8FF3B] text-[#080B11] -rotate-2 shadow-[0_6px_0_0_rgba(184,255,59,0.28)]">
-          CHESS?!
-        </span>
-      </h1>
+      <span className="font-serif text-xl sm:text-2xl tracking-tight text-zinc-950 dark:text-zinc-50">
+        Open<span className="italic opacity-75">Chess</span>
+      </span>
     </div>
   );
 };

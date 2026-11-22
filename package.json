@@ -1,8 +1,8 @@
 {
-  "name": "what-the-chess",
+  "name": "open-chess",
   "private": true,
-  "version": "1.0.0",
-  "description": "What The Chess?! — Ajedrez... pero nada es lo que parece. Every move changes the game.",
+  "version": "2.0.0",
+  "description": "OpenChess — Ajedrez minimalista, elegante y libre. Juega con amigos en salas P2P, en local o contra el bot. PWA sin cuentas ni anuncios.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,8 +13,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "canvas-confetti": "^1.9.4",
     "chess.js": "^1.0.0-beta.8",
+    "framer-motion": "^14.14.0",
     "lucide-react": "^1.16.0",
+    "peerjs": "^1.5.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -22,6 +25,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
@@ -32,6 +36,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.2",
     "vite": "^6.0.5",
+    "vite-plugin-pwa": "^2.0.0",
     "vitest": "^2.1.8"
   }
 }

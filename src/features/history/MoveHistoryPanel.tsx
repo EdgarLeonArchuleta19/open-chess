@@ -1,87 +1,72 @@
-import React from 'react';
-import { ArrowLeftRight, History } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
 import type { MoveRecord } from '../chess/types/chess.types';
-import { PIECE_NAMES_ES } from '../swapping/swapRules';
 
 interface MoveHistoryPanelProps {
   moves: MoveRecord[];
 }
 
 export const MoveHistoryPanel: React.FC<MoveHistoryPanelProps> = ({ moves }) => {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [moves.length]);
+
+  // Group into pairs: [whiteMove, blackMove?]
+  const pairs: Array<{
+    moveNumber: number;
+    white: MoveRecord;
+    black?: MoveRecord;
+  }> = [];
+
+  for (let i = 0; i < moves.length; i += 2) {
+    pairs.push({
+      moveNumber: Math.floor(i / 2) + 1,
+      white: moves[i],
+      black: moves[i + 1],
+    });
+  }
+
   return (
-    <div className="rounded-2xl bg-[#222A36] border border-slate-700/70 flex flex-col h-64 sm:h-72 overflow-hidden">
-      <div className="px-4 py-3 bg-[#1A1F24] border-b border-slate-700/70 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <History className="w-4 h-4 text-[#B8FF3B]" />
-          <h3 className="font-display font-bold text-sm text-[#F8FAFC]">
-            Historial de Jugadas e Intercambios
-          </h3>
-        </div>
-        <span className="px-2 py-0.5 rounded-full bg-[#222A36] text-[11px] font-mono text-[#94A3B8]">
+    <div className="rounded-2xl bg-white dark:bg-[#121419] border border-zinc-200/80 dark:border-zinc-800/80 flex flex-col h-52 sm:h-64 overflow-hidden transition-colors duration-300">
+      <div className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
+        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          Movimientos
+        </span>
+        <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">
           {moves.length} {moves.length === 1 ? 'jugada' : 'jugadas'}
         </span>
       </div>
 
-      {moves.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <ArrowLeftRight className="w-7 h-7 text-slate-600 mb-2" />
-          <p className="text-xs text-[#94A3B8]">
-            Aún no hay movimientos registrados. ¡Mueve una pieza blanca para iniciar la partida!
+      {pairs.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center p-6 text-center">
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            El historial aparecerá aquí al comenzar la partida.
           </p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-800/80">
-          {moves.map((record) => {
-            const isWhite = record.color === 'w';
-            const swap = record.swap;
-
-            return (
-              <div
-                key={record.ply}
-                className="px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs hover:bg-[#1A1F24]/60 transition-colors"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="font-mono text-[11px] text-[#94A3B8] w-7 shrink-0">
-                    {record.moveNumber}.{isWhite ? '' : '..'}
-                  </span>
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full shrink-0 border ${
-                      isWhite
-                        ? 'bg-[#F8FAFC] border-slate-400'
-                        : 'bg-[#080B11] border-slate-500'
-                    }`}
-                    title={isWhite ? 'Blancas' : 'Negras'}
-                  />
-                  <span className="font-mono font-bold text-[#F8FAFC] text-sm">
-                    {record.san}
-                  </span>
-                  <span className="text-[11px] text-[#94A3B8] truncate">
-                    ({record.from} → {record.to})
-                  </span>
-                </div>
-
-                {swap.occurred &&
-                swap.partnerSquare &&
-                swap.partnerPieceBefore &&
-                swap.partnerPieceAfter ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1A1F24] border border-[#B8FF3B]/30 text-[11px] font-mono text-[#B8FF3B] shrink-0">
-                    <span>
-                      {PIECE_NAMES_ES[swap.movedPieceBefore].slice(0, 3)}
-                    </span>
-                    <span>⇄</span>
-                    <span>
-                      {PIECE_NAMES_ES[swap.partnerPieceBefore].slice(0, 3)} (
-                      {swap.partnerSquare})
-                    </span>
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-mono text-slate-500 shrink-0">
-                    Sin ⇄
-                  </span>
-                )}
-              </div>
-            );
-          })}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto divide-y divide-zinc-100/80 dark:divide-zinc-800/50"
+        >
+          {pairs.map((pair) => (
+            <div
+              key={pair.moveNumber}
+              className="grid grid-cols-12 px-4 py-2 text-xs font-mono items-center hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
+            >
+              <span className="col-span-2 text-zinc-400 dark:text-zinc-500">
+                {pair.moveNumber}.
+              </span>
+              <span className="col-span-5 font-medium text-zinc-900 dark:text-zinc-100">
+                {pair.white.san}
+              </span>
+              <span className="col-span-5 font-medium text-zinc-600 dark:text-zinc-400">
+                {pair.black?.san ?? ''}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>

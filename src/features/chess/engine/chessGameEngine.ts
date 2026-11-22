@@ -2,7 +2,7 @@ import { Chess } from 'chess.js';
 import type {
   BoardPiece,
   CapturedPieceRecord,
-  CastlingTracking,
+  FileChar,
   GameStateSnapshot,
   LegalMoveOption,
   MatchStatus,
@@ -13,27 +13,42 @@ import type {
   RankChar,
   Square,
 } from '../types/chess.types';
-import {
-  buildPostSwapFen,
-  executePieceSwap,
-  selectDeterministicSwapPartner,
-} from '../../swapping/swapEngine';
-import { enrichSwapEventWithCheckStatus } from '../../swapping/swapNotifications';
-import { FILES, RANKS } from '../../swapping/swapRules';
 
 export const STANDARD_START_FEN =
   'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-/**
- * Extracts normalized position key (first 4 FEN fields) for threefold repetition tracking.
- */
+export const FILES: readonly FileChar[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+export const RANKS: readonly RankChar[] = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
+export const PIECE_NAMES_ES: Record<PieceType, string> = {
+  p: 'Peón',
+  n: 'Caballo',
+  b: 'Alfil',
+  r: 'Torre',
+  q: 'Dama',
+  k: 'Rey',
+};
+
+export const PIECE_VALUES: Record<PieceType, number> = {
+  p: 1,
+  n: 3,
+  b: 3,
+  r: 5,
+  q: 9,
+  k: 0,
+};
+
+export function squareToCoords(square: Square): { fileIndex: number; rankIndex: number } {
+  return {
+    fileIndex: square.charCodeAt(0) - 'a'.charCodeAt(0),
+    rankIndex: square.charCodeAt(1) - '1'.charCodeAt(0),
+  };
+}
+
 export function getPositionKey(fen: string): string {
   return fen.split(' ').slice(0, 4).join(' ');
 }
 
-/**
- * Finds the square of the King for a given color.
- */
 export function findKingSquare(
   pieces: Partial<Record<Square, BoardPiece>>,
   color: PieceColor
@@ -46,9 +61,6 @@ export function findKingSquare(
   return null;
 }
 
-/**
- * Evaluates check, checkmate, stalemate, and draw conditions on the post-swap board state.
- */
 export function evaluateMatchStatus(
   chess: Chess,
   pieces: Partial<Record<Square, BoardPiece>>,
@@ -57,9 +69,9 @@ export function evaluateMatchStatus(
   const activeTurn = chess.turn() as PieceColor;
   const inCheck = chess.inCheck();
   const checkedKingSquare = inCheck ? findKingSquare(pieces, activeTurn) : null;
-  const activeColorName = activeTurn === 'w' ? 'Blancas' : 'Negras';
+  const activeName = activeTurn === 'w' ? 'Blancas' : 'Negras';
   const opponentColor: PieceColor = activeTurn === 'w' ? 'b' : 'w';
-  const opponentColorName = opponentColor === 'w' ? 'Blancas' : 'Negras';
+  const opponentName = opponentColor === 'w' ? 'Blancas' : 'Negras';
 
   if (chess.isCheckmate()) {
     return {
@@ -68,7 +80,7 @@ export function evaluateMatchStatus(
       inCheck: true,
       checkedKingSquare,
       winner: opponentColor,
-      statusMessage: `¡Jaque mate! Ganan las ${opponentColorName}.`,
+      statusMessage: `Jaque mate · Ganan ${opponentName}`,
     };
   }
 
@@ -79,7 +91,7 @@ export function evaluateMatchStatus(
       inCheck: false,
       checkedKingSquare: null,
       winner: 'draw',
-      statusMessage: 'Tablas por rey ahogado (Stalemate).',
+      statusMessage: 'Tablas · Rey ahogado',
     };
   }
 
@@ -90,12 +102,11 @@ export function evaluateMatchStatus(
       inCheck: false,
       checkedKingSquare: null,
       winner: 'draw',
-      statusMessage: 'Tablas por material insuficiente.',
+      statusMessage: 'Tablas · Material insuficiente',
     };
   }
 
-  const fenParts = chess.fen().split(' ');
-  const halfMoveClock = Number(fenParts[4] ?? 0);
+  const halfMoveClock = Number(chess.fen().split(' ')[4] ?? 0);
   if (halfMoveClock >= 100) {
     return {
       outcome: 'draw-fifty-move',
@@ -103,7 +114,7 @@ export function evaluateMatchStatus(
       inCheck: false,
       checkedKingSquare: null,
       winner: 'draw',
-      statusMessage: 'Tablas por la regla de los 50 movimientos.',
+      statusMessage: 'Tablas · Regla de los 50 movimientos',
     };
   }
 
@@ -115,7 +126,7 @@ export function evaluateMatchStatus(
       inCheck: false,
       checkedKingSquare: null,
       winner: 'draw',
-      statusMessage: 'Tablas por triple repetición de posición.',
+      statusMessage: 'Tablas · Triple repetición',
     };
   }
 
@@ -126,7 +137,7 @@ export function evaluateMatchStatus(
       inCheck: true,
       checkedKingSquare,
       winner: null,
-      statusMessage: `¡Jaque a las ${activeColorName}!`,
+      statusMessage: `Jaque · Turno de ${activeName}`,
     };
   }
 
@@ -136,13 +147,10 @@ export function evaluateMatchStatus(
     inCheck: false,
     checkedKingSquare: null,
     winner: null,
-    statusMessage: `Turno de las ${activeColorName}`,
+    statusMessage: `Turno de ${activeName}`,
   };
 }
 
-/**
- * Creates a fresh GameStateSnapshot from any valid FEN (defaults to standard chess starting position).
- */
 export function createInitialGameState(initialFen: string = STANDARD_START_FEN): GameStateSnapshot {
   const chess = new Chess(initialFen);
   const board = chess.board();
@@ -156,22 +164,12 @@ export function createInitialGameState(initialFen: string = STANDARD_START_FEN):
         pieces[square] = {
           id: `${cell.color}-${cell.type}-${square}`,
           type: cell.type as PieceType,
-          originalType: cell.type as PieceType,
           color: cell.color as PieceColor,
           square,
-          swapCount: 0,
         };
       }
     }
   }
-
-  const castlingField = initialFen.split(' ')[2] ?? '-';
-  const castling: CastlingTracking = {
-    wK: castlingField.includes('K'),
-    wQ: castlingField.includes('Q'),
-    bK: castlingField.includes('k'),
-    bQ: castlingField.includes('q'),
-  };
 
   const posKey = getPositionKey(chess.fen());
   const positionCounts: Record<string, number> = { [posKey]: 1 };
@@ -180,198 +178,75 @@ export function createInitialGameState(initialFen: string = STANDARD_START_FEN):
     fen: chess.fen(),
     turn: chess.turn() as PieceColor,
     pieces,
-    castling,
     capturedPieces: {
       w: [],
       b: [],
     },
     moveHistory: [],
-    lastSwap: null,
     lastMove: null,
     status: evaluateMatchStatus(chess, pieces, positionCounts),
     positionCounts,
   };
 }
 
-/**
- * Simulates moving a piece on the board map (before swap) so we can preview its deterministic swap partner.
- */
-function simulatePreSwapBoard(
-  pieces: Partial<Record<Square, BoardPiece>>,
-  from: Square,
-  to: Square,
-  flags: string,
-  promotion?: PromotionPieceType
-): Partial<Record<Square, BoardPiece>> {
-  const nextPieces: Partial<Record<Square, BoardPiece>> = { ...pieces };
-  const movingPiece = nextPieces[from];
-  if (!movingPiece) return nextPieces;
-
-  delete nextPieces[from];
-
-  // En passant capture removes the enemy pawn behind `to`
-  if (flags.includes('e')) {
-    const epCaptureSq = `${to[0]}${from[1]}` as Square;
-    delete nextPieces[epCaptureSq];
-  }
-
-  // Castling also repositions the friendly rook
-  if (flags.includes('k')) {
-    const rank = from[1] as RankChar;
-    const rookFrom = `h${rank}` as Square;
-    const rookTo = `f${rank}` as Square;
-    const rook = nextPieces[rookFrom];
-    if (rook) {
-      delete nextPieces[rookFrom];
-      nextPieces[rookTo] = { ...rook, square: rookTo };
-    }
-  } else if (flags.includes('q')) {
-    const rank = from[1] as RankChar;
-    const rookFrom = `a${rank}` as Square;
-    const rookTo = `d${rank}` as Square;
-    const rook = nextPieces[rookFrom];
-    if (rook) {
-      delete nextPieces[rookFrom];
-      nextPieces[rookTo] = { ...rook, square: rookTo };
-    }
-  }
-
-  const effectiveType: PieceType = promotion ?? movingPiece.type;
-  nextPieces[to] = {
-    ...movingPiece,
-    square: to,
-    type: effectiveType,
-  };
-
-  return nextPieces;
-}
-
-/**
- * Returns all legal moves for the piece on `square`, including deterministic swap partner preview.
- */
 export function getLegalMovesForSquare(
   state: GameStateSnapshot,
   square: Square
 ): LegalMoveOption[] {
-  if (state.status.isGameOver) {
-    return [];
-  }
-
+  if (state.status.isGameOver) return [];
   const piece = state.pieces[square];
-  if (!piece || piece.color !== state.turn) {
-    return [];
-  }
+  if (!piece || piece.color !== state.turn) return [];
 
   const chess = new Chess(state.fen);
   const rawMoves = chess.moves({ square, verbose: true });
-
-  const byTargetSquare = new Map<Square, LegalMoveOption>();
+  const byTarget = new Map<Square, LegalMoveOption>();
 
   for (const m of rawMoves) {
     const to = m.to as Square;
-    if (byTargetSquare.has(to)) {
-      continue;
-    }
-
-    const isPromotion = Boolean(m.promotion) || m.flags.includes('p');
-    const isCapture = m.flags.includes('c') || m.flags.includes('e');
-    const isEnPassant = m.flags.includes('e');
-    const isCastling = m.flags.includes('k') || m.flags.includes('q');
-
-    const simulatedBoard = simulatePreSwapBoard(
-      state.pieces,
-      square,
-      to,
-      m.flags,
-      isPromotion ? 'q' : undefined
-    );
-    const effectiveType: PieceType = isPromotion ? 'q' : piece.type;
-    const partner = selectDeterministicSwapPartner(
-      simulatedBoard,
-      to,
-      effectiveType,
-      state.turn
-    );
-
-    byTargetSquare.set(to, {
+    if (byTarget.has(to)) continue;
+    byTarget.set(to, {
       from: square,
       to,
       san: m.san,
-      isCapture,
-      isPromotion,
-      isEnPassant,
-      isCastling,
-      predictedSwapPartner: partner ? partner.square : null,
+      isCapture: m.flags.includes('c') || m.flags.includes('e'),
+      isPromotion: Boolean(m.promotion) || m.flags.includes('p'),
+      isEnPassant: m.flags.includes('e'),
+      isCastling: m.flags.includes('k') || m.flags.includes('q'),
     });
   }
 
-  return Array.from(byTargetSquare.values());
+  return Array.from(byTarget.values());
 }
 
-/**
- * Checks whether a move from `from` to `to` requires pawn promotion selection.
- */
 export function isPromotionMove(
   state: GameStateSnapshot,
   from: Square,
   to: Square
 ): boolean {
-  const legalMoves = getLegalMovesForSquare(state, from);
-  const matching = legalMoves.find((m) => m.to === to);
-  return Boolean(matching?.isPromotion);
+  return getLegalMovesForSquare(state, from).some((m) => m.to === to && m.isPromotion);
 }
 
-/**
- * Normalizes SAN check/checkmate suffix (`+` / `#`) to match the post-swap board evaluation.
- */
-function normalizeSanWithPostSwapCheck(
-  rawSan: string,
-  inCheck: boolean,
-  isCheckmate: boolean
-): string {
-  const baseSan = rawSan.replace(/[+#]+$/, '');
-  if (isCheckmate) return `${baseSan}#`;
-  if (inCheck) return `${baseSan}+`;
-  return baseSan;
-}
-
-/**
- * Validates and applies a standard chess move followed immediately by the deterministic
- * piece-identity exchange, returning the new GameStateSnapshot.
- */
-export function applyMoveAndSwap(
+export function applyChessMove(
   state: GameStateSnapshot,
-  moveInput: {
-    from: Square;
-    to: Square;
-    promotion?: PromotionPieceType;
-  }
+  moveInput: { from: Square; to: Square; promotion?: PromotionPieceType }
 ): { ok: true; nextState: GameStateSnapshot } | { ok: false; error: string } {
   if (state.status.isGameOver) {
-    return {
-      ok: false,
-      error: 'La partida ya finalizó. Inicia una nueva partida para seguir jugando.',
-    };
+    return { ok: false, error: 'La partida ya finalizó.' };
   }
 
   const movingPiece = state.pieces[moveInput.from];
   if (!movingPiece) {
-    return {
-      ok: false,
-      error: 'No hay ninguna pieza en la casilla seleccionada.',
-    };
+    return { ok: false, error: 'No hay ninguna pieza en la casilla seleccionada.' };
   }
 
   if (movingPiece.color !== state.turn) {
     return {
       ok: false,
-      error: `Es el turno de las ${state.turn === 'w' ? 'Blancas' : 'Negras'}.`,
+      error: `Es el turno de ${state.turn === 'w' ? 'Blancas' : 'Negras'}.`,
     };
   }
 
   const chess = new Chess(state.fen);
-
-  // Detect if promotion is needed
   const needsPromotion =
     movingPiece.type === 'p' && (moveInput.to[1] === '8' || moveInput.to[1] === '1');
   const promotionChoice: PromotionPieceType | undefined = needsPromotion
@@ -386,23 +261,17 @@ export function applyMoveAndSwap(
       promotion: promotionChoice,
     });
   } catch {
-    return {
-      ok: false,
-      error: `Movimiento inválido: ${moveInput.from} → ${moveInput.to} no es legal para esta pieza.`,
-    };
+    return { ok: false, error: 'Movimiento ilegal.' };
   }
 
   if (!executedMove) {
-    return {
-      ok: false,
-      error: `Movimiento inválido: ${moveInput.from} → ${moveInput.to}.`,
-    };
+    return { ok: false, error: 'Movimiento ilegal.' };
   }
 
   const plyNumber = state.moveHistory.length + 1;
   const moveNumber = Math.ceil(plyNumber / 2);
 
-  // 1. Update captured pieces
+  // Update captured pieces
   const nextCaptured: { w: CapturedPieceRecord[]; b: CapturedPieceRecord[] } = {
     w: [...state.capturedPieces.w],
     b: [...state.capturedPieces.b],
@@ -419,99 +288,55 @@ export function applyMoveAndSwap(
     nextCaptured[capturedColor].push({
       id: capturedBoardPiece?.id ?? `${capturedColor}-${executedMove.captured}-${plyNumber}`,
       type: (capturedBoardPiece?.type ?? executedMove.captured) as PieceType,
-      originalType: (capturedBoardPiece?.originalType ?? executedMove.captured) as PieceType,
       color: capturedColor,
       capturedOn: captureSquare,
       moveNumber,
     });
   }
 
-  // 2. Apply physical move on our piece map
-  const postMovePieces = simulatePreSwapBoard(
-    state.pieces,
-    moveInput.from,
-    moveInput.to,
-    executedMove.flags,
-    promotionChoice
-  );
+  // Update piece map while preserving persistent IDs for smooth Framer Motion layout animations
+  const nextPieces: Partial<Record<Square, BoardPiece>> = { ...state.pieces };
+  delete nextPieces[moveInput.from];
 
-  // 3. Update castling tracking based on king or corner movement/capture
-  const nextCastling: CastlingTracking = { ...state.castling };
-  if (moveInput.from === 'e1') {
-    nextCastling.wK = false;
-    nextCastling.wQ = false;
-  }
-  if (moveInput.from === 'e8') {
-    nextCastling.bK = false;
-    nextCastling.bQ = false;
-  }
-  if (moveInput.from === 'h1' || moveInput.to === 'h1') nextCastling.wK = false;
-  if (moveInput.from === 'a1' || moveInput.to === 'a1') nextCastling.wQ = false;
-  if (moveInput.from === 'h8' || moveInput.to === 'h8') nextCastling.bK = false;
-  if (moveInput.from === 'a8' || moveInput.to === 'a8') nextCastling.bQ = false;
-
-  // 4. Execute deterministic piece identity swap
-  const { updatedPieces, swapEvent: rawSwapEvent } = executePieceSwap(
-    postMovePieces,
-    moveInput.to,
-    state.turn,
-    plyNumber
-  );
-
-  // 5. Build post-swap FEN and validate with chess.js
-  const postMoveFenParts = chess.fen().split(' ');
-  const nextTurn = (postMoveFenParts[1] as PieceColor) ?? (state.turn === 'w' ? 'b' : 'w');
-  const candidateEpSquare = postMoveFenParts[3] ?? '-';
-  const halfMoveClock = Number(postMoveFenParts[4] ?? 0);
-  const fullMoveNumber = Number(postMoveFenParts[5] ?? 1);
-
-  let postSwapFen = buildPostSwapFen({
-    pieces: updatedPieces,
-    nextTurn,
-    castlingTracking: nextCastling,
-    candidateEpSquare,
-    halfMoveClock,
-    fullMoveNumber,
-  });
-
-  let postSwapChess: Chess;
-  try {
-    postSwapChess = new Chess(postSwapFen);
-  } catch {
-    // Fallback without en-passant target square if chess.js strict validation rejects ep after swap
-    postSwapFen = buildPostSwapFen({
-      pieces: updatedPieces,
-      nextTurn,
-      castlingTracking: nextCastling,
-      candidateEpSquare: '-',
-      halfMoveClock,
-      fullMoveNumber,
-    });
-    postSwapChess = new Chess(postSwapFen);
+  if (executedMove.flags.includes('e')) {
+    const epCaptureSq = `${moveInput.to[0]}${moveInput.from[1]}` as Square;
+    delete nextPieces[epCaptureSq];
   }
 
-  const authoritativeFen = postSwapChess.fen();
+  if (executedMove.flags.includes('k')) {
+    const rank = moveInput.from[1] as RankChar;
+    const rookFrom = `h${rank}` as Square;
+    const rookTo = `f${rank}` as Square;
+    const rook = nextPieces[rookFrom];
+    if (rook) {
+      delete nextPieces[rookFrom];
+      nextPieces[rookTo] = { ...rook, square: rookTo };
+    }
+  } else if (executedMove.flags.includes('q')) {
+    const rank = moveInput.from[1] as RankChar;
+    const rookFrom = `a${rank}` as Square;
+    const rookTo = `d${rank}` as Square;
+    const rook = nextPieces[rookFrom];
+    if (rook) {
+      delete nextPieces[rookFrom];
+      nextPieces[rookTo] = { ...rook, square: rookTo };
+    }
+  }
+
+  nextPieces[moveInput.to] = {
+    ...movingPiece,
+    square: moveInput.to,
+    type: promotionChoice ?? movingPiece.type,
+  };
+
+  const authoritativeFen = chess.fen();
   const posKey = getPositionKey(authoritativeFen);
   const nextPositionCounts: Record<string, number> = {
     ...state.positionCounts,
     [posKey]: (state.positionCounts[posKey] ?? 0) + 1,
   };
 
-  // 6. Evaluate check, checkmate, stalemate, and draw AFTER the swap
-  const nextStatus = evaluateMatchStatus(postSwapChess, updatedPieces, nextPositionCounts);
-
-  const enrichedSwapEvent = enrichSwapEventWithCheckStatus(
-    rawSwapEvent,
-    nextStatus.inCheck,
-    nextStatus.outcome === 'checkmate',
-    plyNumber
-  );
-
-  const finalSan = normalizeSanWithPostSwapCheck(
-    executedMove.san,
-    nextStatus.inCheck,
-    nextStatus.outcome === 'checkmate'
-  );
+  const nextStatus = evaluateMatchStatus(chess, nextPieces, nextPositionCounts);
 
   const moveRecord: MoveRecord = {
     ply: plyNumber,
@@ -519,26 +344,23 @@ export function applyMoveAndSwap(
     color: state.turn,
     from: moveInput.from,
     to: moveInput.to,
-    pieceMoved: movingPiece.type,
-    san: finalSan,
+    piece: movingPiece.type,
+    san: executedMove.san,
     captured: executedMove.captured as PieceType | undefined,
     promotion: promotionChoice,
-    swap: enrichedSwapEvent,
     fenAfter: authoritativeFen,
-    resultedInCheck: nextStatus.inCheck,
-    resultedInCheckmate: nextStatus.outcome === 'checkmate',
+    isCheck: nextStatus.inCheck,
+    isCheckmate: nextStatus.outcome === 'checkmate',
   };
 
   return {
     ok: true,
     nextState: {
       fen: authoritativeFen,
-      turn: nextTurn,
-      pieces: updatedPieces,
-      castling: nextCastling,
+      turn: chess.turn() as PieceColor,
+      pieces: nextPieces,
       capturedPieces: nextCaptured,
       moveHistory: [...state.moveHistory, moveRecord],
-      lastSwap: enrichedSwapEvent,
       lastMove: { from: moveInput.from, to: moveInput.to },
       status: nextStatus,
       positionCounts: nextPositionCounts,
@@ -546,17 +368,11 @@ export function applyMoveAndSwap(
   };
 }
 
-/**
- * Resigns the match on behalf of `resigningColor`.
- */
 export function resignMatch(
   state: GameStateSnapshot,
   resigningColor: PieceColor
 ): GameStateSnapshot {
-  if (state.status.isGameOver) {
-    return state;
-  }
-
+  if (state.status.isGameOver) return state;
   const winner: PieceColor = resigningColor === 'w' ? 'b' : 'w';
   const resigningName = resigningColor === 'w' ? 'Blancas' : 'Negras';
   const winnerName = winner === 'w' ? 'Blancas' : 'Negras';
@@ -569,14 +385,26 @@ export function resignMatch(
       inCheck: state.status.inCheck,
       checkedKingSquare: state.status.checkedKingSquare,
       winner,
-      statusMessage: `Las ${resigningName} se rindieron. ¡Ganan las ${winnerName}!`,
+      statusMessage: `${resigningName} se rindieron · Ganan ${winnerName}`,
     },
   };
 }
 
-/**
- * Helper to list all 64 squares in board display order according to orientation.
- */
+export function agreeDrawMatch(state: GameStateSnapshot): GameStateSnapshot {
+  if (state.status.isGameOver) return state;
+  return {
+    ...state,
+    status: {
+      outcome: 'draw-agreed',
+      isGameOver: true,
+      inCheck: false,
+      checkedKingSquare: null,
+      winner: 'draw',
+      statusMessage: 'Tablas por acuerdo mutuo',
+    },
+  };
+}
+
 export function getOrderedBoardSquares(orientation: PieceColor): Square[] {
   const ranks = orientation === 'w' ? [...RANKS].reverse() : [...RANKS];
   const files = orientation === 'w' ? [...FILES] : [...FILES].reverse();

@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -66,5 +67,37 @@ function preserveMiPaginaPlugin(): Plugin {
 
 export default defineConfig({
   base: './',
-  plugins: [react(), preserveMiPaginaPlugin()],
+  plugins: [
+    react(),
+    preserveMiPaginaPlugin(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'pwa-icon.svg'],
+      manifest: {
+        name: 'OpenChess — Ajedrez Minimalista',
+        short_name: 'OpenChess',
+        description:
+          'Ajedrez minimalista, elegante y libre. Juega con amigos en salas instantáneas, en el mismo dispositivo o contra el bot. Sin cuentas ni anuncios.',
+        theme_color: '#0A0B0E',
+        background_color: '#0A0B0E',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        start_url: './',
+        scope: './',
+        icons: [
+          {
+            src: './pwa-icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any maskable',
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globIgnores: ['**/mipagina/**'],
+        navigateFallbackDenylist: [/\/mipagina\//],
+      },
+    }),
+  ],
 });
