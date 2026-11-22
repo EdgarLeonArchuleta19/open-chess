@@ -11,10 +11,6 @@ import {
   generateRoomCode,
   normalizeRoomCode,
 } from '../../online/usePeerRoom';
-import { AuroraGlow } from '../../../components/reactbits/AuroraGlow';
-import { BlurText } from '../../../components/reactbits/BlurText';
-import { SpotlightCard } from '../../../components/reactbits/SpotlightCard';
-import { Magnetic } from '../../../components/reactbits/Magnetic';
 import { LiveShowcaseBoard } from './LiveShowcaseBoard';
 
 interface HomeScreenProps {
@@ -82,27 +78,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
   ];
 
   return (
-    <div className="relative w-full min-h-[calc(100vh-4rem)] flex items-center">
-      {/* Subtle organic ambient light */}
-      <AuroraGlow />
-
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <div className="w-full min-h-[calc(100vh-4rem)] flex items-center">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          {/* Left Column: Just the Title + Clean Controls */}
-          <div className="lg:col-span-6 space-y-6">
+          {/* Left Column: Clean Title + Controls */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="lg:col-span-6 space-y-6"
+          >
             <h1 className="font-serif text-5xl sm:text-6xl tracking-tight leading-none text-zinc-950 dark:text-zinc-50">
-              <BlurText text="OpenChess" delayStep={0.08} />
+              Open<span className="italic opacity-75">Chess</span>
             </h1>
 
-            <SpotlightCard
-              className="rounded-3xl bg-white/85 dark:bg-[#111318]/90 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 p-5 shadow-[0_14px_45px_rgba(0,0,0,0.04)] dark:shadow-[0_18px_50px_rgba(0,0,0,0.35)]"
-              spotlightColor="rgba(161, 161, 170, 0.14)"
-            >
+            <div className="rounded-3xl bg-white dark:bg-[#121419] border border-zinc-200/80 dark:border-zinc-800/80 p-5 shadow-sm transition-colors duration-200">
               {/* Mode Selector */}
               <div
                 role="tablist"
                 aria-label="Modo de juego"
-                className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-zinc-100/90 dark:bg-[#0A0B0E]/90 border border-zinc-200/60 dark:border-zinc-800/70"
+                className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-zinc-100 dark:bg-[#0A0B0E] border border-zinc-200/60 dark:border-zinc-800/70"
               >
                 {tabs.map((tab) => {
                   const isActive = activeTab === tab.id;
@@ -122,7 +117,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                       {isActive && (
                         <motion.span
                           layoutId="home-mode-pill"
-                          transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                          transition={{ type: 'spring', stiffness: 520, damping: 38 }}
                           className="absolute inset-0 rounded-xl bg-zinc-900 dark:bg-zinc-100 -z-10"
                         />
                       )}
@@ -133,16 +128,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                 })}
               </div>
 
-              {/* Minimal Controls */}
+              {/* Controls */}
               <div className="mt-5">
                 <AnimatePresence mode="wait">
                   {activeTab === 'online' && (
                     <motion.div
                       key="tab-online"
-                      initial={{ opacity: 0, y: 6 }}
+                      initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.18 }}
+                      transition={{ duration: 0.14 }}
                       className="space-y-4"
                     >
                       <div className="grid grid-cols-3 gap-1.5">
@@ -157,7 +152,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                             key={opt.id}
                             type="button"
                             onClick={() => setOnlineSide(opt.id)}
-                            className={`py-2 rounded-xl text-xs font-medium border transition-colors flex items-center justify-center gap-1 ${
+                            className={`py-2 rounded-xl text-xs font-medium border transition-colors active:scale-[0.98] flex items-center justify-center gap-1 ${
                               onlineSide === opt.id
                                 ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100'
                                 : 'bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400'
@@ -169,16 +164,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                         ))}
                       </div>
 
-                      <Magnetic className="w-full">
-                        <button
-                          type="button"
-                          onClick={handleCreateRoom}
-                          className="w-full py-3 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-950 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors"
-                        >
-                          <span>Crear sala</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </Magnetic>
+                      <button
+                        type="button"
+                        onClick={handleCreateRoom}
+                        className="w-full py-3 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-950 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.985]"
+                      >
+                        <span>Crear sala</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
 
                       <form
                         onSubmit={handleJoinRoom}
@@ -195,7 +188,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                         <button
                           type="submit"
                           disabled={normalizeRoomCode(roomInput).length < 4}
-                          className="px-4 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 disabled:opacity-35 text-zinc-900 dark:text-zinc-100 font-semibold text-xs transition-colors"
+                          className="px-4 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 disabled:opacity-35 text-zinc-900 dark:text-zinc-100 font-semibold text-xs transition-all active:scale-[0.98]"
                         >
                           Entrar
                         </button>
@@ -206,10 +199,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                   {activeTab === 'bot' && (
                     <motion.div
                       key="tab-bot"
-                      initial={{ opacity: 0, y: 6 }}
+                      initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.18 }}
+                      transition={{ duration: 0.14 }}
                       className="space-y-4"
                     >
                       <div className="grid grid-cols-2 gap-2">
@@ -218,7 +211,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                             key={diff.id}
                             type="button"
                             onClick={() => setBotDifficulty(diff.id)}
-                            className={`py-2.5 px-3 rounded-xl border text-left transition-all flex items-center justify-between ${
+                            className={`py-2.5 px-3 rounded-xl border text-left transition-all active:scale-[0.98] flex items-center justify-between ${
                               botDifficulty === diff.id
                                 ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100'
                                 : 'bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-600'
@@ -244,7 +237,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                             key={opt.id}
                             type="button"
                             onClick={() => setBotSide(opt.id)}
-                            className={`py-2 rounded-xl text-xs font-medium border transition-colors ${
+                            className={`py-2 rounded-xl text-xs font-medium border transition-all active:scale-[0.98] ${
                               botSide === opt.id
                                 ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100'
                                 : 'bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400'
@@ -255,50 +248,46 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartMatch }) => {
                         ))}
                       </div>
 
-                      <Magnetic className="w-full">
-                        <button
-                          type="button"
-                          onClick={handleStartBot}
-                          className="w-full py-3 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-950 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors"
-                        >
-                          <span>Jugar</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </Magnetic>
+                      <button
+                        type="button"
+                        onClick={handleStartBot}
+                        className="w-full py-3 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-950 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.985]"
+                      >
+                        <span>Jugar</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
                     </motion.div>
                   )}
 
                   {activeTab === 'local' && (
                     <motion.div
                       key="tab-local"
-                      initial={{ opacity: 0, y: 6 }}
+                      initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.18 }}
+                      transition={{ duration: 0.14 }}
                       className="pt-2"
                     >
-                      <Magnetic className="w-full">
-                        <button
-                          type="button"
-                          onClick={handleStartLocal}
-                          className="w-full py-3.5 px-6 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-950 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors"
-                        >
-                          <span>Jugar 2 jugadores</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </Magnetic>
+                      <button
+                        type="button"
+                        onClick={handleStartLocal}
+                        className="w-full py-3.5 px-6 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-950 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.985]"
+                      >
+                        <span>Jugar 2 jugadores</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
-            </SpotlightCard>
-          </div>
+            </div>
+          </motion.div>
 
-          {/* Right Column: Quiet Living Chessboard */}
+          {/* Right Column: Quiet 60fps Living Chessboard */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
             className="lg:col-span-6 max-w-[430px] w-full mx-auto"
           >
             <LiveShowcaseBoard />

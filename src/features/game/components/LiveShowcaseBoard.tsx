@@ -8,7 +8,6 @@ import {
 } from '../../chess/engine/chessGameEngine';
 import type { GameStateSnapshot, Square } from '../../chess/types/chess.types';
 import { ChessPieceSvg } from '../../../components/chess/ChessPieceSvg';
-import { SpotlightCard } from '../../../components/reactbits/SpotlightCard';
 
 const OPERA_GAME_MOVES: ReadonlyArray<{ from: Square; to: Square }> = [
   { from: 'e2', to: 'e4' },
@@ -53,7 +52,7 @@ export const LiveShowcaseBoard: React.FC = () => {
   );
 
   useEffect(() => {
-    const delay = stepIndex >= OPERA_GAME_MOVES.length ? 2600 : 1250;
+    const delay = stepIndex >= OPERA_GAME_MOVES.length ? 2600 : 1200;
     const timer = window.setTimeout(() => {
       if (stepIndex >= OPERA_GAME_MOVES.length) {
         setStepIndex(0);
@@ -75,10 +74,7 @@ export const LiveShowcaseBoard: React.FC = () => {
   const squares = getOrderedBoardSquares('w');
 
   return (
-    <SpotlightCard
-      className="rounded-3xl bg-white/80 dark:bg-[#111318]/85 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.06)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.45)]"
-      spotlightColor="rgba(161, 161, 170, 0.14)"
-    >
+    <div className="rounded-3xl bg-white dark:bg-[#121419] border border-zinc-200/80 dark:border-zinc-800/80 p-3 shadow-sm transition-colors duration-200">
       <div className="aspect-square w-full rounded-2xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10">
         <LayoutGroup id="showcase-opera-board">
           <div className="w-full h-full grid grid-cols-8 grid-rows-8">
@@ -110,10 +106,10 @@ export const LiveShowcaseBoard: React.FC = () => {
                       layoutId={`showcase-${piece.id}`}
                       transition={{
                         type: 'spring',
-                        stiffness: 340,
-                        damping: 30,
+                        stiffness: 420,
+                        damping: 34,
                       }}
-                      className="relative z-10 w-[82%] h-[82%] flex items-center justify-center"
+                      className="relative z-10 w-[82%] h-[82%] flex items-center justify-center will-change-transform"
                     >
                       <ChessPieceSvg
                         type={piece.type}
@@ -128,6 +124,6 @@ export const LiveShowcaseBoard: React.FC = () => {
           </div>
         </LayoutGroup>
       </div>
-    </SpotlightCard>
+    </div>
   );
 };

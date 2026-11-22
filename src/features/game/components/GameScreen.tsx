@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import confetti from 'canvas-confetti';
 import {
   Check,
   Copy,
@@ -79,19 +78,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const isBot = config.mode === 'bot';
   const isLocal = config.mode === 'local';
 
-  // Trigger sound and confetti when a move completes
+  // Trigger subtle audio feedback when a move completes
   const playMoveAudio = useCallback(
     (next: GameStateSnapshot, wasCapture: boolean) => {
       if (next.status.isGameOver) {
         chessSound.playGameOver(preferences.soundEnabled);
-        if (next.status.outcome === 'checkmate') {
-          confetti({
-            particleCount: 70,
-            spread: 65,
-            origin: { y: 0.65 },
-            colors: ['#18181B', '#F4F4F5', '#A1A1AA', '#F59E0B'],
-          });
-        }
       } else if (next.status.inCheck) {
         chessSound.playCheck(preferences.soundEnabled);
       } else if (wasCapture) {
