@@ -12,9 +12,9 @@ describe('OpenChess — Application UI & Easter Egg Tests', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.getByRole('tab', { name: /Sala con Amigos/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Contra el Bot/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /2 Jugadores Local/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Amigos/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Bot/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Local/i })).toBeInTheDocument();
 
     // Toggle dark -> light mode
     const themeBtn = screen.getByRole('button', {
@@ -28,9 +28,9 @@ describe('OpenChess — Application UI & Easter Egg Tests', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('tab', { name: /2 Jugadores Local/i }));
+    await user.click(screen.getByRole('tab', { name: /Local/i }));
     const startLocalBtn = await screen.findByRole('button', {
-      name: /Iniciar partida local/i,
+      name: /Jugar 2 jugadores/i,
     });
     await user.click(startLocalBtn);
 

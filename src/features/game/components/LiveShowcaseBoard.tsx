@@ -10,10 +10,6 @@ import type { GameStateSnapshot, Square } from '../../chess/types/chess.types';
 import { ChessPieceSvg } from '../../../components/chess/ChessPieceSvg';
 import { SpotlightCard } from '../../../components/reactbits/SpotlightCard';
 
-/**
- * Paul Morphy's Opera Game (Paris, 1858) — plays smoothly in a quiet loop
- * on the home screen to give OpenChess a genuine, living chess presence.
- */
 const OPERA_GAME_MOVES: ReadonlyArray<{ from: Square; to: Square }> = [
   { from: 'e2', to: 'e4' },
   { from: 'e7', to: 'e5' },
@@ -77,23 +73,13 @@ export const LiveShowcaseBoard: React.FC = () => {
   }, [stepIndex]);
 
   const squares = getOrderedBoardSquares('w');
-  const latestMove = snapshot.moveHistory[snapshot.moveHistory.length - 1];
 
   return (
     <SpotlightCard
-      className="rounded-3xl bg-white/80 dark:bg-[#111318]/85 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 p-3.5 sm:p-4 shadow-[0_20px_60px_rgba(0,0,0,0.06)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.45)]"
+      className="rounded-3xl bg-white/80 dark:bg-[#111318]/85 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.06)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.45)]"
       spotlightColor="rgba(161, 161, 170, 0.14)"
     >
-      <div className="flex items-center justify-between px-1 pb-3 text-[11px] font-mono text-zinc-400 dark:text-zinc-500">
-        <span>Morphy vs. Duque de Brunswick · 1858</span>
-        <span className="text-zinc-700 dark:text-zinc-300 font-medium">
-          {latestMove
-            ? `${latestMove.moveNumber}.${latestMove.color === 'w' ? '' : '..'} ${latestMove.san}`
-            : 'Inicio'}
-        </span>
-      </div>
-
-      <div className="aspect-square w-full rounded-xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10">
+      <div className="aspect-square w-full rounded-2xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10">
         <LayoutGroup id="showcase-opera-board">
           <div className="w-full h-full grid grid-cols-8 grid-rows-8">
             {squares.map((sq) => {

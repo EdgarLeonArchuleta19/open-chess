@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Header } from '../components/layout/Header';
 import { EasterEggModal } from '../components/ui/EasterEggModal';
+import { ClickSpark } from '../components/reactbits/ClickSpark';
 import { EasterEggFullPage } from '../features/easter-egg/EasterEggFullPage';
 import type {
   ActiveMatchConfig,
@@ -132,77 +133,65 @@ export const AppRouter: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F7F5] dark:bg-[#0A0B0E] text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
-      <Header
-        isInGame={Boolean(activeMatch)}
-        theme={preferences.theme}
-        soundEnabled={preferences.soundEnabled}
-        onNavigateHome={handleExitToHome}
-        onToggleTheme={handleToggleTheme}
-        onToggleSound={handleToggleSound}
-        onOpenEasterEgg={handleClickEasterEggIcon}
-      />
+    <ClickSpark>
+      <div className="min-h-screen flex flex-col bg-[#F7F7F5] dark:bg-[#0A0B0E] text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
+        <Header
+          isInGame={Boolean(activeMatch)}
+          theme={preferences.theme}
+          soundEnabled={preferences.soundEnabled}
+          onNavigateHome={handleExitToHome}
+          onToggleTheme={handleToggleTheme}
+          onToggleSound={handleToggleSound}
+          onOpenEasterEgg={handleClickEasterEggIcon}
+        />
 
-      <main className="flex-1 flex flex-col">
-        <AnimatePresence mode="wait">
-          {!activeMatch ? (
-            <motion.div
-              key="home"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1"
-            >
-              <HomeScreen
-                theme={preferences.theme}
-                onStartMatch={(cfg) => setActiveMatch(cfg)}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key={`game-${activeMatch.mode}-${activeMatch.roomCode ?? 'local'}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1"
-            >
-              <GameScreen
-                config={activeMatch}
-                preferences={preferences}
-                onUpdatePreferences={updatePreferences}
-                onExitToHome={handleExitToHome}
-              />
-            </motion.div>
+        <main className="flex-1 flex flex-col">
+          <AnimatePresence mode="wait">
+            {!activeMatch ? (
+              <motion.div
+                key="home"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1"
+              >
+                <HomeScreen onStartMatch={(cfg) => setActiveMatch(cfg)} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={`game-${activeMatch.mode}-${activeMatch.roomCode ?? 'local'}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1"
+              >
+                <GameScreen
+                  config={activeMatch}
+                  preferences={preferences}
+                  onUpdatePreferences={updatePreferences}
+                  onExitToHome={handleExitToHome}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+
+        {/* Challenge modal before unlocking */}
+        <EasterEggModal
+          isOpen={isEasterEggChallengeOpen}
+          onClose={() => setIsEasterEggChallengeOpen(false)}
+          onUnlocked={handleUnlockEasterEgg}
+        />
+
+        {/* Full-page route (#/107) displaying the untouched 2019 mipagina/index.html */}
+        <AnimatePresence>
+          {isEasterEggRouteOpen && (
+            <EasterEggFullPage onExit={handleExitEasterEggRoute} />
           )}
         </AnimatePresence>
-      </main>
-
-      <footer className="py-5 px-4 border-t border-zinc-200/70 dark:border-zinc-800/70 text-center text-xs text-zinc-400 dark:text-zinc-500 transition-colors duration-300">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span className="font-serif text-sm text-zinc-700 dark:text-zinc-300">
-            Open<span className="italic opacity-75">Chess</span>
-          </span>
-          <span className="font-mono text-[11px]">
-            Libre · Sin cuentas · Sin anuncios · PWA
-          </span>
-        </div>
-      </footer>
-
-      {/* Challenge modal before unlocking */}
-      <EasterEggModal
-        isOpen={isEasterEggChallengeOpen}
-        onClose={() => setIsEasterEggChallengeOpen(false)}
-        onUnlocked={handleUnlockEasterEgg}
-      />
-
-      {/* Full-page route (#/107) displaying the untouched 2019 mipagina/index.html */}
-      <AnimatePresence>
-        {isEasterEggRouteOpen && (
-          <EasterEggFullPage onExit={handleExitEasterEggRoute} />
-        )}
-      </AnimatePresence>
-    </div>
+      </div>
+    </ClickSpark>
   );
 };
