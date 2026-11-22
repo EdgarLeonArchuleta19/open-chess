@@ -12,9 +12,9 @@ describe('OpenChess — Application UI & Easter Egg Tests', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.getByText(/Sala con Amigos/i)).toBeInTheDocument();
-    expect(screen.getByText(/Contra el Bot/i)).toBeInTheDocument();
-    expect(screen.getByText(/2 Jugadores Local/i)).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Sala con Amigos/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Contra el Bot/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /2 Jugadores Local/i })).toBeInTheDocument();
 
     // Toggle dark -> light mode
     const themeBtn = screen.getByRole('button', {
