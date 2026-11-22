@@ -154,7 +154,10 @@ export const AppRouter: React.FC = () => {
               transition={{ duration: 0.2 }}
               className="flex-1"
             >
-              <HomeScreen onStartMatch={(cfg) => setActiveMatch(cfg)} />
+              <HomeScreen
+                theme={preferences.theme}
+                onStartMatch={(cfg) => setActiveMatch(cfg)}
+              />
             </motion.div>
           ) : (
             <motion.div

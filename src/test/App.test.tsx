@@ -28,7 +28,11 @@ describe('OpenChess — Application UI & Easter Egg Tests', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /2 Jugadores Local/i }));
+    await user.click(screen.getByRole('tab', { name: /2 Jugadores Local/i }));
+    const startLocalBtn = await screen.findByRole('button', {
+      name: /Iniciar partida local/i,
+    });
+    await user.click(startLocalBtn);
 
     expect(
       await screen.findByRole('grid', { name: /Tablero de ajedrez OpenChess/i })
