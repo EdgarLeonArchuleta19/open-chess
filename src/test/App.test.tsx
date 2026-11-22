@@ -50,7 +50,7 @@ describe('OpenChess — Application UI & Easter Egg Tests', () => {
     expect(screen.getByText(/Turno de Negras/i)).toBeInTheDocument();
   });
 
-  it('preserves and unlocks the 2019 CETis 107 Easter Egg when answering "rochin"', async () => {
+  it('preserves and unlocks the 2019 CETis 107 Easter Egg as a full-page route with exit button', async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -66,11 +66,18 @@ describe('OpenChess — Application UI & Easter Egg Tests', () => {
     await user.type(input, 'rochin');
     await user.click(screen.getByRole('button', { name: /Desbloquear/i }));
 
-    expect(
-      screen.getByText(/CÁPSULA DEL TIEMPO \(2019\)/i)
-    ).toBeInTheDocument();
+    // Full-page route opens with exit button at top and original view link
+    const exitBtn = await screen.findByRole('button', {
+      name: /Salir del Easter Egg/i,
+    });
+    expect(exitBtn).toBeInTheDocument();
+    expect(window.location.hash).toBe('#/107');
     expect(
       screen.getByRole('link', { name: /Abrir Vista Original/i })
     ).toHaveAttribute('href', expect.stringContaining('mipagina/index.html'));
+
+    // Exit Easter Egg returns cleanly to OpenChess
+    await user.click(exitBtn);
+    expect(window.location.hash).toBe('');
   });
 });

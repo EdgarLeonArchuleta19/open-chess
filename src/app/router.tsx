@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Header } from '../components/layout/Header';
 import { EasterEggModal } from '../components/ui/EasterEggModal';
+import { EasterEggFullPage } from '../features/easter-egg/EasterEggFullPage';
 import type {
   ActiveMatchConfig,
   AppPreferences,
@@ -9,7 +10,11 @@ import type {
 import { HomeScreen } from '../features/game/components/HomeScreen';
 import { GameScreen } from '../features/game/components/GameScreen';
 import { normalizeRoomCode } from '../features/online/usePeerRoom';
-import { loadPreferences, savePreferences } from '../lib/storage';
+import {
+  loadEasterEggUnlocked,
+  loadPreferences,
+  savePreferences,
+} from '../lib/storage';
 
 function detectInitialRoomFromUrl(): ActiveMatchConfig | null {
   if (typeof window === 'undefined') return null;
@@ -27,6 +32,11 @@ function detectInitialRoomFromUrl(): ActiveMatchConfig | null {
   };
 }
 
+function isEasterEggHashActive(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.location.hash === '#/107';
+}
+
 export const AppRouter: React.FC = () => {
   const [preferences, setPreferences] = useState<AppPreferences>(() =>
     loadPreferences()
@@ -34,7 +44,10 @@ export const AppRouter: React.FC = () => {
   const [activeMatch, setActiveMatch] = useState<ActiveMatchConfig | null>(() =>
     detectInitialRoomFromUrl()
   );
-  const [isEasterEggOpen, setIsEasterEggOpen] = useState(false);
+  const [isEasterEggChallengeOpen, setIsEasterEggChallengeOpen] = useState(false);
+  const [isEasterEggRouteOpen, setIsEasterEggRouteOpen] = useState<boolean>(
+    () => isEasterEggHashActive() && loadEasterEggUnlocked()
+  );
 
   // Sync dark/light mode class onto <html>
   useEffect(() => {
@@ -45,6 +58,19 @@ export const AppRouter: React.FC = () => {
       root.classList.remove('dark');
     }
   }, [preferences.theme]);
+
+  // Listen for browser back/forward button on #/107 hash route
+  useEffect(() => {
+    const onHashChange = () => {
+      if (window.location.hash === '#/107' && loadEasterEggUnlocked()) {
+        setIsEasterEggRouteOpen(true);
+      } else {
+        setIsEasterEggRouteOpen(false);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   const updatePreferences = useCallback(
     (updater: (prev: AppPreferences) => AppPreferences) => {
@@ -73,10 +99,35 @@ export const AppRouter: React.FC = () => {
 
   const handleExitToHome = useCallback(() => {
     setActiveMatch(null);
-    // Clear ?room=... query param cleanly without reloading
     if (typeof window !== 'undefined' && window.location.search.includes('room=')) {
       const cleanUrl = `${window.location.origin}${window.location.pathname}`;
       window.history.replaceState({}, '', cleanUrl);
+    }
+  }, []);
+
+  const handleClickEasterEggIcon = useCallback(() => {
+    if (loadEasterEggUnlocked()) {
+      window.location.hash = '#/107';
+      setIsEasterEggRouteOpen(true);
+    } else {
+      setIsEasterEggChallengeOpen(true);
+    }
+  }, []);
+
+  const handleUnlockEasterEgg = useCallback(() => {
+    setIsEasterEggChallengeOpen(false);
+    window.location.hash = '#/107';
+    setIsEasterEggRouteOpen(true);
+  }, []);
+
+  const handleExitEasterEggRoute = useCallback(() => {
+    setIsEasterEggRouteOpen(false);
+    if (typeof window !== 'undefined' && window.location.hash === '#/107') {
+      window.history.replaceState(
+        {},
+        '',
+        `${window.location.pathname}${window.location.search}`
+      );
     }
   }, []);
 
@@ -89,7 +140,7 @@ export const AppRouter: React.FC = () => {
         onNavigateHome={handleExitToHome}
         onToggleTheme={handleToggleTheme}
         onToggleSound={handleToggleSound}
-        onOpenEasterEgg={() => setIsEasterEggOpen(true)}
+        onOpenEasterEgg={handleClickEasterEggIcon}
       />
 
       <main className="flex-1 flex flex-col">
@@ -136,10 +187,19 @@ export const AppRouter: React.FC = () => {
         </div>
       </footer>
 
+      {/* Challenge modal before unlocking */}
       <EasterEggModal
-        isOpen={isEasterEggOpen}
-        onClose={() => setIsEasterEggOpen(false)}
+        isOpen={isEasterEggChallengeOpen}
+        onClose={() => setIsEasterEggChallengeOpen(false)}
+        onUnlocked={handleUnlockEasterEgg}
       />
+
+      {/* Full-page route (#/107) displaying the untouched 2019 mipagina/index.html */}
+      <AnimatePresence>
+        {isEasterEggRouteOpen && (
+          <EasterEggFullPage onExit={handleExitEasterEggRoute} />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
